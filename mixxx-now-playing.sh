@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
-TMPFILE=~/mixxx-now-playing.txt
-touch $TMPFILE
-echo "+"  > $TMPFILE
+
+TXTFILE=~/SHARED/mixxx-now-playing.txt
+
+touch $TXTFILE
+echo " "  > $TXTFILE
 while true; do
 
-	while pidof mixxx; do
-	xdotool search --name "\| Mixxx" getwindowname > $TMPFILE
+	while pidof mixxx > /dev/null; do
+	xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
 	sleep 5
 	done
 
