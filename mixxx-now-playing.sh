@@ -6,14 +6,20 @@ touch $TXTFILE
 echo " "  > $TXTFILE
 OS=`uname`
 
+echo "Detected OS: $OS"
+
 while true; do
 	while pgrep mixxx > /dev/null; do
 
-	if [ $OS == "Linux']; then
+	if [ $OS == "Linux" ]; then
 		xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
-	elif [ $OS == "Darwin']; then
-		FULLTEXT=`python mixxtitle.py`
-		echo $FULLTEXT |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
+	elif [ $OS == "Darwin" ]; then
+		python -c " 
+import Quartz
+print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionOnScreenOnly,Quartz.kCGNullWindowID))
+" | grep "| Mixxx" | cut -d'"' -f 2 |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
+	fi
+
 	sleep 5
 	done
 
