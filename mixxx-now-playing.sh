@@ -4,10 +4,16 @@ TXTFILE=~/SHARED/mixxx-now-playing.txt
 
 touch $TXTFILE
 echo " "  > $TXTFILE
-while true; do
+OS=`uname`
 
-	while pidof mixxx > /dev/null; do
-	xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
+while true; do
+	while pgrep mixxx > /dev/null; do
+
+	if [ $OS == "Linux']; then
+		xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
+	elif [ $OS == "Darwin']; then
+		FULLTEXT=`python mixxtitle.py`
+		echo $FULLTEXT |cut -d\| -f1 | sed 's/,/ -/' > $TXTFILE
 	sleep 5
 	done
 
