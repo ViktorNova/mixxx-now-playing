@@ -14,12 +14,12 @@ while true; do
 	while pgrep -i mixxx > /dev/null; do
 
 	if [ $OS == "Linux" ]; then
-		xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }'> $TXTFILE
+		xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }' >  $TXTFILE
 	elif [ $OS == "Darwin" ]; then
 		python -c " 
 import Quartz
 print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionOnScreenOnly,Quartz.kCGNullWindowID))
-" | grep "| Mixxx" | cut -d'"' -f 2 |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }' > $TXTFILE
+" | grep "| Mixxx" | cut -d'"' -f 2 |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }' | sed 's/$/          /' > $TXTFILE
 	fi
 
 	# TODO: don't write the file if the value is the same (better for disk I/O)
@@ -27,6 +27,6 @@ print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElemen
 	sleep 5
 	done
 
-rm -f $TXTFILE
+
 sleep 60
 done
