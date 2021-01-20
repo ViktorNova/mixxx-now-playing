@@ -7,17 +7,15 @@ This script takes the Artist - Title of the currently playing song in Mixxx and 
 Just have your OS launch this script upon login - it will check once a minute to see if Mixxx is running. When Mixxx is running, it will update the text file (which saves to ~/mixxx-now-playing.txt by default) once every 5 seconds based on the currently playing track. If decks stop playing, the text file will be blanked out until a track starts playing again. 
 
 The same script will work on Linux or MacOS.
-You will need to have ````uni2ascii```` installed, and Linux users will also need xdotool: 
+You will need to have ````ascii2uni```` installed, and Linux users will also need xdotool: 
 
 To install ascii2uni and xdotool it on Linux (Ubuntu/Debian):
 ````
-sudo apt install uni2ascii xdotool
+sudo apt install ascii2uni xdotool
 ````
 
 To install ascii2uni on MacOS via Homebrew:
 ````
-brew install uni2ascii
+brew install ascii2uni
 ````
 
-On Linux, you also need to have xdotool installed. 
-On Mac, no external dependencies are used (Python + Quartz)
