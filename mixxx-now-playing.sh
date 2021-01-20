@@ -18,7 +18,7 @@ while true; do
 	elif [ $OS == "Darwin" ]; then
 		python -c " 
 import Quartz
-print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionOnScreenOnly,Quartz.kCGNullWindowID))
+print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListAll,Quartz.kCGNullWindowID))
 " | grep "| Mixxx" | cut -d'"' -f 2 |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }' | sed 's/$/          /' > $TXTFILE
 	fi
 
