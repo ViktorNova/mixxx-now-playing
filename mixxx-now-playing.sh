@@ -12,14 +12,28 @@ echo "Detected OS: $OS"
 
 while true; do
 	while pgrep -i mixxx > /dev/null; do
-
+	
 	if [ $OS == "Linux" ]; then
-		xdotool search --name "\| Mixxx" getwindowname |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }' >  $TXTFILE
+		xdotool search --name "\| Mixxx" getwindowname |
+		cut -d\| -f1 |
+		sed 's/,/ -/' |
+		awk '{ print tolower($0) }' |
+		ascii2uni -aU -q|
+		awk '{ print toupper($0) }' |
+		sed 's/$/          /' > $TXTFILE
 	elif [ $OS == "Darwin" ]; then
 		python -c " 
 import Quartz
-print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListAll,Quartz.kCGNullWindowID))
-" | grep "| Mixxx" | cut -d'"' -f 2 |cut -d\| -f1 | sed 's/,/ -/' | awk '{ print toupper($0) }' | sed 's/$/          /' > $TXTFILE
+print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))
+" | 
+		grep "| Mixxx" | 
+		cut -d'"' -f 2 |
+		cut -d\| -f1 |
+		sed 's/,/ -/' |
+		awk '{ print tolower($0) }' |
+		ascii2uni -aU -q|
+		awk '{ print toupper($0) }' | 
+		sed 's/$/          /' > $TXTFILE
 	fi
 
 	# TODO: don't write the file if the value is the same (better for disk I/O)
