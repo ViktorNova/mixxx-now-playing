@@ -10,37 +10,73 @@ OS=`uname`
 
 echo "Detected OS: $OS"
 
-while true; do
-	while pgrep -i mixxx > /dev/null; do
-	
-	if [ $OS == "Linux" ]; then
-		xdotool search --name "\| Mixxx" getwindowname |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' |
-		sed 's/$/          /' > $TXTFILE
-	elif [ $OS == "Darwin" ]; then
-		python -c " 
-import Quartz
-print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))
-" | 
-		grep "| Mixxx" | 
-		cut -d'"' -f 2 |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' | 
-		sed 's/$/          /' > $TXTFILE
-	fi
+quartzListAllWindows=$'import Quartz\nprint(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))'
 
-	# TODO: don't write the file if the value is the same (better for disk I/O)
-	# TODO: unify write command for both OSs
-	sleep 5
+lastKnownTitle=" "
+
+FormatAndWriteTitle(){
+	currentTitle=$(  
+	echo "$1" |
+	cut -d\| -f1 |
+	sed 's/,/ -/' |
+	awk '{ print tolower($0) }' |
+	ascii2uni -aU -q|
+	awk '{ print toupper($0) }' |
+	sed 's/$/          /')
+
+	if [[ $currentTitle != $lastKnownTitle ]]; then
+		echo "$currentTitle" > $TXTFILE
+		lastKnownTitle=$currentTitle
+		curtime=$(date +'%H:%M')
+		echo "$curtime] Now playing:  $currentTitle"
+	fi
+}
+
+IsMixxxRunning(){
+	if [ $OS == "Linux" ]; then
+		pgrep -i mixxx > /dev/null
+	
+	elif [ $OS == "Darwin" ]; then
+		pgrep -i mixxx > /dev/null
+
+	elif [[ $OS == MSYS_NT* ]]; then
+		tasklist | grep "mixxx.exe" > /dev/null
+
+	else
+		# unsupported
+		echo "Unsupported OS, cannot detect process"
+
+	fi
+}
+
+while true; do
+	echo "Checking for MIXXX..."
+
+	while IsMixxxRunning > /dev/null; do
+	
+		if [ $OS == "Linux" ]; then
+			xdotool search --name "\| Mixxx" getwindowname | 
+			FormatAndWriteTitle
+		
+		elif [ $OS == "Darwin" ]; then
+			python -c "$quartzListAllWindows" |
+			grep "| Mixxx" | 
+			cut -d'"' -f 2 |
+			FormatAndWriteTitle
+
+		elif [[ $OS == MSYS_NT* ]]; then
+			#TODO: get window title under Windows
+			FormatAndWriteTitle 'Windows, Unsupported | Mixxx'
+
+		else
+			# unsupported
+			FormatAndWriteTitle 'Unrecognized, Unsupported | Mixxx'
+
+		fi
+
+		sleep 5
 	done
 
-
-sleep 60
+	echo "recovering in 60 seconds... (CTRL-C to quit)"
+	sleep 60
 done
