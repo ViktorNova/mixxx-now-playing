@@ -1,16 +1,22 @@
 #!/usr/bin/env bash
 
-# Linux - Mixxx
-BINNAME='mixxx'
+# ====================================================================
+# ==== CUSTOMIZE AS NEEDED FOR YOUR PREFERRED PLAYER
+
+# Mixxx (default)
 PROCNAME='Mixxx'
 TITLEPATTERN='(.+)| Mixxx'
 
-# Windows - VLC
-#BINNAME='vlc.exe'
+# VLC
 #PROCNAME='VLC'
 #TITLEPATTERN='(.+) - VLC media player'
 
+# TODO: discover proc names and title patterns for Traktor and VirtualDJ
+
 TXTFILE=~/mixxx-now-playing.txt
+
+# ====================================================================
+# ==== DO NOT MODIFY BELOW HERE
 
 touch $TXTFILE
 
@@ -34,7 +40,7 @@ FormatAndWriteTitle(){
 		echo "$currentTitle" |
 		sed 's/,/ -/' |
 		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
+		([[ $OS == MSYS_NT* ]] && cat || ascii2uni -aU -q )|
 		awk '{ print toupper($0) }' |
 		sed 's/$/          /')
 
@@ -47,27 +53,27 @@ FormatAndWriteTitle(){
 	fi
 }
 
-IsMixxxRunning(){
+IsPlayerRunning(){
 	if [ $OS == "Linux" ]; then
-		pgrep -i mixxx > /dev/null
+		pgrep -i "$BINANME" 
 	
 	elif [ $OS == "Darwin" ]; then
-		pgrep -i mixxx > /dev/null
+		pgrep -i "$BINANME" 
 
 	elif [[ $OS == MSYS_NT* ]]; then
-		tasklist | grep "$BINANME" > /dev/null
+		tasklist | grep -i "$BINANME" 
 
 	else
 		# unsupported
 		echo "Unsupported OS, cannot detect process"
-
+		exit
 	fi
 }
 
 while true; do
 	echo "Checking for $PROCNAME..."
 
-	while IsMixxxRunning > /dev/null; do
+	while IsPlayerRunning > /dev/null; do
 	
 		if [ $OS == "Linux" ]; then
 			xdotool search --name "\| $PROCNAME" getwindowname | 
