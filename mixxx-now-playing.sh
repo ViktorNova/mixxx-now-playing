@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
 
+# Linux - Mixxx
+BINNAME='mixxx'
+PROCNAME='Mixxx'
+TITLEPATTERN='(.+)| Mixxx'
+
+# Windows - VLC
+#BINNAME='vlc.exe'
+#PROCNAME='VLC'
+#TITLEPATTERN='(.+) - VLC media player'
+
 TXTFILE=~/mixxx-now-playing.txt
 
 touch $TXTFILE
-# TODO: fail here if the file is not writeable
+
+# fail here if the file is not writeable
+[ -w $TXTFILE ] && echo "Capturing track titles to [$TXTFILE]" || { echo "Cannot write to [$TXTFILE]"; exit; }
 
 echo " "  > $TXTFILE
 OS=`uname`
@@ -15,20 +27,23 @@ quartzListAllWindows=$'import Quartz\nprint(Quartz.CGWindowListCopyWindowInfo(Qu
 lastKnownTitle=" "
 
 FormatAndWriteTitle(){
-	currentTitle=$(  
-	echo "$1" |
-	cut -d\| -f1 |
-	sed 's/,/ -/' |
-	awk '{ print tolower($0) }' |
-	ascii2uni -aU -q|
-	awk '{ print toupper($0) }' |
-	sed 's/$/          /')
+	if [[ $1 =~ $TITLEPATTERN ]]; then
+		currentTitle="${BASH_REMATCH[1]}"
 
-	if [[ $currentTitle != $lastKnownTitle ]]; then
-		echo "$currentTitle" > $TXTFILE
-		lastKnownTitle=$currentTitle
-		curtime=$(date +'%H:%M')
-		echo "$curtime] Now playing:  $currentTitle"
+		currentTitle=$(  
+		echo "$currentTitle" |
+		sed 's/,/ -/' |
+		awk '{ print tolower($0) }' |
+		ascii2uni -aU -q|
+		awk '{ print toupper($0) }' |
+		sed 's/$/          /')
+
+		if [[ $currentTitle != $lastKnownTitle ]]; then
+			echo "$currentTitle" > $TXTFILE
+			lastKnownTitle=$currentTitle
+			curtime=$(date +'%H:%M')
+			echo "$curtime] Now playing:  $currentTitle"
+		fi
 	fi
 }
 
@@ -40,7 +55,7 @@ IsMixxxRunning(){
 		pgrep -i mixxx > /dev/null
 
 	elif [[ $OS == MSYS_NT* ]]; then
-		tasklist | grep "mixxx.exe" > /dev/null
+		tasklist | grep "$BINANME" > /dev/null
 
 	else
 		# unsupported
@@ -50,27 +65,27 @@ IsMixxxRunning(){
 }
 
 while true; do
-	echo "Checking for MIXXX..."
+	echo "Checking for $PROCNAME..."
 
 	while IsMixxxRunning > /dev/null; do
 	
 		if [ $OS == "Linux" ]; then
-			xdotool search --name "\| Mixxx" getwindowname | 
+			xdotool search --name "\| $PROCNAME" getwindowname | 
 			FormatAndWriteTitle
 		
 		elif [ $OS == "Darwin" ]; then
 			python -c "$quartzListAllWindows" |
-			grep "| Mixxx" | 
+			grep "| $PROCNAME" | 
 			cut -d'"' -f 2 |
 			FormatAndWriteTitle
 
 		elif [[ $OS == MSYS_NT* ]]; then
-			#TODO: get window title under Windows
-			FormatAndWriteTitle 'Windows, Unsupported | Mixxx'
+			mytitle=$(powershell -Command "& Write-Host (Get-Process -Name $PROCNAME).MainWindowTitle")
+			FormatAndWriteTitle "$mytitle"
 
 		else
 			# unsupported
-			FormatAndWriteTitle 'Unrecognized, Unsupported | Mixxx'
+			FormatAndWriteTitle "Unrecognized, Unsupported | $PROCNAME"
 
 		fi
 
