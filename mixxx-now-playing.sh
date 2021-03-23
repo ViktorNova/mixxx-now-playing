@@ -39,8 +39,6 @@ FormatAndWriteTitle(){
 		currentTitle=$(  
 		echo "$currentTitle" |
 		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		([[ $OS == MSYS_NT* ]] && cat || ascii2uni -aU -q )|
 		awk '{ print toupper($0) }' |
 		sed 's/$/          /')
 
@@ -77,12 +75,16 @@ while true; do
 	
 		if [ $OS == "Linux" ]; then
 			xdotool search --name "\| $PROCNAME" getwindowname | 
+			awk '{ print tolower($0) }' |
+			ascii2uni -aU -q |
 			FormatAndWriteTitle
 		
 		elif [ $OS == "Darwin" ]; then
 			python -c "$quartzListAllWindows" |
 			grep "| $PROCNAME" | 
 			cut -d'"' -f 2 |
+			awk '{ print tolower($0) }' |
+			ascii2uni -aU -q |
 			FormatAndWriteTitle
 
 		elif [[ $OS == MSYS_NT* ]]; then
