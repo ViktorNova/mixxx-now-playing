@@ -9,35 +9,13 @@ echo " "  > $TXTFILE
 OS=`uname`
 
 echo "Detected OS: $OS"
+#TODO switch out the db path depending on OS
 
 while true; do
 	while pgrep -i mixxx > /dev/null; do
-	
-	if [ $OS == "Linux" ]; then
-		xdotool search --name "\| Mixxx" getwindowname |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' |
-		sed 's/$/          /' > $TXTFILE
-	elif [ $OS == "Darwin" ]; then
-		python -c " 
-import Quartz
-print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))
-" | 
-		grep "| Mixxx" | 
-		cut -d'"' -f 2 |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' | 
-		sed 's/$/          /' > $TXTFILE
-	fi
-
-	# TODO: don't write the file if the value is the same (better for disk I/O)
-	# TODO: unify write command for both OSs
+		sqlite3 ~/Library/Application\ Support/Mixxx/mixxxdb.sqlite "select library.artist, library.title, library.year from library where library.id = (select PlaylistTracks.track_id from PlaylistTracks where id = (select max(id) from PlaylistTracks));" |
+		sed 's/$/|/' |
+		sed 's/|/ | /g' > $TXTFILE
 	sleep 5
 	done
 
