@@ -9,35 +9,17 @@ echo " "  > $TXTFILE
 OS=`uname`
 
 echo "Detected OS: $OS"
+#TODO switch out the db path depending on OS
 
 while true; do
+	PLID=$(sqlite3 ~/Library/Application\ Support/Mixxx/mixxxdb.sqlite "select playlist_id from PlaylistTracks pt where id = (select max(id) from PlaylistTracks)")
+	echo "Using Playlist ID: "$PLID
 	while pgrep -i mixxx > /dev/null; do
-	
-	if [ $OS == "Linux" ]; then
-		xdotool search --name "\| Mixxx" getwindowname |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' |
-		sed 's/$/          /' > $TXTFILE
-	elif [ $OS == "Darwin" ]; then
-		python -c " 
-import Quartz
-print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))
-" | 
-		grep "| Mixxx" | 
-		cut -d'"' -f 2 |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' | 
-		sed 's/$/          /' > $TXTFILE
-	fi
-
-	# TODO: don't write the file if the value is the same (better for disk I/O)
-	# TODO: unify write command for both OSs
+		sqlite3 ~/Library/Application\ Support/Mixxx/mixxxdb.sqlite "SELECT library.artist, library.title, library.year  FROM "main"."library" WHERE id = (SELECT track_id from PlaylistTracks WHERE playlist_id = $PLID ORDER BY position DESC limit 1)" |
+		sed 's/$/|/' |
+		sed 's/|/ | /g' |
+		sed 's/|  |/|/g' |
+		sed -e '1s/^/NOW PLAYING: /' > $TXTFILE
 	sleep 5
 	done
 
