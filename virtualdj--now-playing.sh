@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #TODO: MAKE ME PROPER, PASTE IN STUFF FROM OTHER SCRIPT
-TRACKLISTFILE="/Users/n0va/Documents/VirtualDJ/History/tracklist.txt"
+TRACKLISTFILE=~/Documents/VirtualDJ/History/tracklist.txt
 TXTFILE=~/mixxx-now-playing.txt
+
 
 touch $TXTFILE
 # TODO: fail here if the file is not writeable
@@ -21,7 +22,6 @@ while true; do
 	#else
     	#	echo "Strings are not equal."
 	#fi
-
 	echo $CURRENT_SONG > $TXTFILE
 
 	# TODO: don't write the file if the value is the same
