@@ -22,7 +22,7 @@ while true; do
 	#else
     	#	echo "Strings are not equal."
 	#fi
-	echo $CURRENT_SONG > $TXTFILE
+	echo "$CURRENT_SONG          "> $TXTFILE
 
 	# TODO: don't write the file if the value is the same
 	# (better for disk I/O)
