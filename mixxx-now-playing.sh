@@ -1,46 +1,105 @@
 #!/usr/bin/env bash
 
+# ====================================================================
+# ==== CUSTOMIZE AS NEEDED FOR YOUR PREFERRED PLAYER
+
+# Mixxx (default)
+PROCNAME='Mixxx'
+TITLEPATTERN='(.+)| Mixxx'
+
+# VLC
+#PROCNAME='VLC'
+#TITLEPATTERN='(.+) - VLC media player'
+
+# TODO: discover proc names and title patterns for Traktor and VirtualDJ
+
 TXTFILE=~/mixxx-now-playing.txt
 
+# ====================================================================
+# ==== DO NOT MODIFY BELOW HERE
+
 touch $TXTFILE
-# TODO: fail here if the file is not writeable
+
+# fail here if the file is not writeable
+[ -w $TXTFILE ] && echo "Capturing track titles to [$TXTFILE]" || { echo "Cannot write to [$TXTFILE]"; exit; }
 
 echo " "  > $TXTFILE
 OS=`uname`
 
 echo "Detected OS: $OS"
 
-while true; do
-	while pgrep -i mixxx > /dev/null; do
-	
-	if [ $OS == "Linux" ]; then
-		xdotool search --name "\| Mixxx" getwindowname |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' |
-		sed 's/$/          /' > $TXTFILE
-	elif [ $OS == "Darwin" ]; then
-		python -c " 
-import Quartz
-print(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))
-" | 
-		grep "| Mixxx" | 
-		cut -d'"' -f 2 |
-		cut -d\| -f1 |
-		sed 's/,/ -/' |
-		awk '{ print tolower($0) }' |
-		ascii2uni -aU -q|
-		awk '{ print toupper($0) }' | 
-		sed 's/$/          /' > $TXTFILE
-	fi
+quartzListAllWindows=$'import Quartz\nprint(Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListExcludeDesktopElements|Quartz.kCGWindowListOptionAll,Quartz.kCGNullWindowID))'
 
-	# TODO: don't write the file if the value is the same (better for disk I/O)
-	# TODO: unify write command for both OSs
-	sleep 5
+lastKnownTitle=" "
+
+FormatAndWriteTitle(){
+	if [[ $1 =~ $TITLEPATTERN ]]; then
+		currentTitle="${BASH_REMATCH[1]}"
+
+		currentTitle=$(  
+		echo "$currentTitle" |
+		sed 's/,/ -/' |
+		awk '{ print toupper($0) }' |
+		sed 's/$/          /')
+
+		if [[ $currentTitle != $lastKnownTitle ]]; then
+			echo "$currentTitle" > $TXTFILE
+			lastKnownTitle=$currentTitle
+			curtime=$(date +'%H:%M')
+			echo "$curtime] Now playing:  $currentTitle"
+		fi
+	fi
+}
+
+IsPlayerRunning(){
+	if [ $OS == "Linux" ]; then
+		pgrep -i "$BINANME" 
+	
+	elif [ $OS == "Darwin" ]; then
+		pgrep -i "$BINANME" 
+
+	elif [[ $OS == MSYS_NT* ]]; then
+		tasklist | grep -i "$BINANME" 
+
+	else
+		# unsupported
+		echo "Unsupported OS, cannot detect process"
+		exit
+	fi
+}
+
+while true; do
+	echo "Checking for $PROCNAME..."
+
+	while IsPlayerRunning > /dev/null; do
+	
+		if [ $OS == "Linux" ]; then
+			xdotool search --name "\| $PROCNAME" getwindowname | 
+			awk '{ print tolower($0) }' |
+			ascii2uni -aU -q |
+			FormatAndWriteTitle
+		
+		elif [ $OS == "Darwin" ]; then
+			python -c "$quartzListAllWindows" |
+			grep "| $PROCNAME" | 
+			cut -d'"' -f 2 |
+			awk '{ print tolower($0) }' |
+			ascii2uni -aU -q |
+			FormatAndWriteTitle
+
+		elif [[ $OS == MSYS_NT* ]]; then
+			mytitle=$(powershell -Command "& Write-Host (Get-Process -Name $PROCNAME).MainWindowTitle")
+			FormatAndWriteTitle "$mytitle"
+
+		else
+			# unsupported
+			FormatAndWriteTitle "Unrecognized, Unsupported | $PROCNAME"
+
+		fi
+
+		sleep 5
 	done
 
-
-sleep 60
+	echo "recovering in 60 seconds... (CTRL-C to quit)"
+	sleep 60
 done
